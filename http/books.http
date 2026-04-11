@@ -1,0 +1,227 @@
+### Hello Cucumber BDD - 도서 관리 REST API 테스트
+### IntelliJ IDEA HTTP Client 파일
+### 환경 변수: http-client.env.json 참조
+
+# ──────────────────────────────────────────────────────────────────
+# 전체 도서 목록 조회
+# ──────────────────────────────────────────────────────────────────
+
+### GET /api/books - 전체 도서 목록 조회
+GET {{baseUrl}}/api/books
+Accept: application/json
+
+> {%
+client.test("전체 도서 목록 조회 성공", function() {
+    client.assert(response.status === 200, "상태 코드가 200이어야 합니다");
+    client.assert(response.body.success === true, "success 필드가 true이어야 합니다");
+    client.assert(Array.isArray(response.body.data), "data가 배열이어야 합니다");
+});
+%}
+
+###
+
+# ──────────────────────────────────────────────────────────────────
+# 도서 등록
+# ──────────────────────────────────────────────────────────────────
+
+### POST /api/books - 새 도서 등록 (Clean Code)
+POST {{baseUrl}}/api/books
+Content-Type: application/json
+
+{
+  "title": "Clean Code",
+  "author": "Robert C. Martin",
+  "isbn": "978-0132350884",
+  "price": 35.99,
+  "stock": 10
+}
+
+> {%
+client.test("도서 등록 성공", function() {
+    client.assert(response.status === 201, "상태 코드가 201이어야 합니다");
+    client.assert(response.body.success === true, "success가 true이어야 합니다");
+    client.assert(response.body.data.title === "Clean Code", "제목이 Clean Code이어야 합니다");
+    client.global.set("bookId", response.body.data.id);
+});
+%}
+
+###
+
+### POST /api/books - 새 도서 등록 (The Pragmatic Programmer)
+POST {{baseUrl}}/api/books
+Content-Type: application/json
+
+{
+  "title": "The Pragmatic Programmer",
+  "author": "Andrew Hunt",
+  "isbn": "978-0135957059",
+  "price": 42.99,
+  "stock": 5
+}
+
+> {%
+client.test("도서 등록 성공 - Pragmatic", function() {
+    client.assert(response.status === 201, "상태 코드가 201이어야 합니다");
+});
+%}
+
+###
+
+### POST /api/books - 새 도서 등록 (Design Patterns)
+POST {{baseUrl}}/api/books
+Content-Type: application/json
+
+{
+  "title": "Design Patterns",
+  "author": "Gang of Four",
+  "isbn": "978-0201633610",
+  "price": 55.00,
+  "stock": 3
+}
+
+###
+
+### POST /api/books - 유효성 검증 실패 테스트 (제목 없음)
+POST {{baseUrl}}/api/books
+Content-Type: application/json
+
+{
+  "title": "",
+  "author": "Some Author",
+  "isbn": "978-0000000001",
+  "price": 19.99,
+  "stock": 5
+}
+
+> {%
+client.test("유효성 검증 실패 - 빈 제목", function() {
+    client.assert(response.status === 400, "상태 코드가 400이어야 합니다");
+    client.assert(response.body.success === false, "success가 false이어야 합니다");
+    client.assert(response.body.data.title !== undefined, "title 필드 오류가 있어야 합니다");
+});
+%}
+
+###
+
+### POST /api/books - 중복 ISBN 테스트
+POST {{baseUrl}}/api/books
+Content-Type: application/json
+
+{
+  "title": "Duplicate Book",
+  "author": "Some Author",
+  "isbn": "978-0132350884",
+  "price": 25.00,
+  "stock": 1
+}
+
+> {%
+client.test("중복 ISBN 등록 실패", function() {
+    client.assert(response.status === 409, "상태 코드가 409이어야 합니다");
+    client.assert(response.body.success === false, "success가 false이어야 합니다");
+});
+%}
+
+###
+
+# ──────────────────────────────────────────────────────────────────
+# 도서 단건 조회
+# ──────────────────────────────────────────────────────────────────
+
+### GET /api/books/{id} - 특정 도서 조회 (전역 변수 bookId 사용)
+GET {{baseUrl}}/api/books/{{bookId}}
+Accept: application/json
+
+> {%
+client.test("도서 단건 조회 성공", function() {
+    client.assert(response.status === 200, "상태 코드가 200이어야 합니다");
+    client.assert(response.body.data.id === client.global.get("bookId"), "ID가 일치해야 합니다");
+});
+%}
+
+###
+
+### GET /api/books/{id} - 존재하지 않는 도서 조회 (404)
+GET {{baseUrl}}/api/books/999999
+Accept: application/json
+
+> {%
+client.test("존재하지 않는 도서 조회 - 404", function() {
+    client.assert(response.status === 404, "상태 코드가 404이어야 합니다");
+    client.assert(response.body.success === false, "success가 false이어야 합니다");
+});
+%}
+
+###
+
+# ──────────────────────────────────────────────────────────────────
+# 도서 수정
+# ──────────────────────────────────────────────────────────────────
+
+### PUT /api/books/{id} - 도서 가격 수정
+PUT {{baseUrl}}/api/books/{{bookId}}
+Content-Type: application/json
+
+{
+  "title": "Clean Code",
+  "author": "Robert C. Martin",
+  "isbn": "978-0132350884",
+  "price": 29.99,
+  "stock": 15
+}
+
+> {%
+client.test("도서 수정 성공", function() {
+    client.assert(response.status === 200, "상태 코드가 200이어야 합니다");
+    client.assert(response.body.data.price === 29.99, "가격이 29.99이어야 합니다");
+    client.assert(response.body.data.stock === 15, "재고가 15이어야 합니다");
+});
+%}
+
+###
+
+### PUT /api/books/{id} - 존재하지 않는 도서 수정 (404)
+PUT {{baseUrl}}/api/books/999999
+Content-Type: application/json
+
+{
+  "title": "Non Existent Book",
+  "author": "Ghost Author",
+  "isbn": "978-9999999999",
+  "price": 9.99,
+  "stock": 0
+}
+
+> {%
+client.test("존재하지 않는 도서 수정 - 404", function() {
+    client.assert(response.status === 404, "상태 코드가 404이어야 합니다");
+});
+%}
+
+###
+
+# ──────────────────────────────────────────────────────────────────
+# 도서 삭제
+# ──────────────────────────────────────────────────────────────────
+
+### DELETE /api/books/{id} - 도서 삭제
+DELETE {{baseUrl}}/api/books/{{bookId}}
+
+> {%
+client.test("도서 삭제 성공", function() {
+    client.assert(response.status === 204, "상태 코드가 204이어야 합니다");
+});
+%}
+
+###
+
+### DELETE /api/books/{id} - 존재하지 않는 도서 삭제 (404)
+DELETE {{baseUrl}}/api/books/999999
+
+> {%
+client.test("존재하지 않는 도서 삭제 - 404", function() {
+    client.assert(response.status === 404, "상태 코드가 404이어야 합니다");
+});
+%}
+
+###
