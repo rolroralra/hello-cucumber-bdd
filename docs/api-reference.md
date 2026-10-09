@@ -1,4 +1,10 @@
-# API 레퍼런스
+# 부록. API 레퍼런스
+
+> Cucumber 시나리오가 검증하는 **테스트 대상 REST API**의 명세입니다.
+> Step Definition을 새로 작성할 때 요청 형식, 검증 규칙, 응답 코드를 확인하는 용도로 사용하세요.
+>
+> - 로컬 실행(`./gradlew bootRun`) 시 Base URL은 아래와 같습니다.
+> - 테스트 실행 시에는 서버가 **랜덤 포트**로 뜨며, Step Definition이 `@LocalServerPort`로 포트를 받아 요청합니다.
 
 Base URL: `http://localhost:8080`
 
@@ -214,3 +220,25 @@ Base URL: `http://localhost:8080`
 | 404 | Not Found | 도서를 찾을 수 없음 |
 | 409 | Conflict | ISBN 중복 |
 | 500 | Internal Server Error | 서버 오류 |
+
+---
+
+## 시나리오와 API의 대응
+
+| Feature 시나리오 | 호출 API | 기대 상태 |
+|------------------|----------|:---:|
+| 새 도서를 성공적으로 등록한다 | `POST /api/books` | 201 |
+| 제목 없이 도서를 등록하면 실패한다 | `POST /api/books` | 400 |
+| 중복 ISBN으로 도서를 등록하면 실패한다 | `POST /api/books` | 409 |
+| 전체 도서 목록을 조회한다 | `GET /api/books` | 200 |
+| ID로 특정 도서를 조회한다 | `GET /api/books/{id}` | 200 |
+| 존재하지 않는 ID로 조회하면 404를 반환한다 | `GET /api/books/{id}` | 404 |
+| 도서 가격을 수정한다 / 도서 재고를 추가한다 | `GET` 후 `PUT /api/books/{id}` | 200 |
+| 도서를 삭제한다 | `DELETE /api/books/{id}` | 204 |
+| 존재하지 않는 도서를 삭제하면 404를 반환한다 | `DELETE /api/books/{id}` | 404 |
+
+---
+
+| 이전 글 | 목차 | 다음 글 |
+|:---|:---:|---:|
+| [← 09. 치트시트](cheatsheet.md) | [학습 로드맵](../README.md#학습-로드맵) | [처음으로: README →](../README.md) |
