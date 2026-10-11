@@ -102,7 +102,6 @@ public class CucumberIntegrationTest {
 @CucumberContextConfiguration                                       // (1)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)  // (2)
 @ActiveProfiles("test")                                             // (3)
-@ContextConfiguration(initializers = CucumberSpringConfiguration.ContainerInitializer.class) // (4)
 public class CucumberSpringConfiguration {
 
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")...;
@@ -110,7 +109,13 @@ public class CucumberSpringConfiguration {
     static {
         POSTGRES.start();                                           // (5)
     }
-    ...
+
+    @DynamicPropertySource                                          // (4)
+    static void datasourceProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
+    }
 }
 ```
 
@@ -119,8 +124,8 @@ public class CucumberSpringConfiguration {
 | (1) | "Cucumber야, Spring 컨텍스트는 이 클래스의 설정으로 만들어라". Glue 패키지 안에 **정확히 하나**만 있어야 합니다. |
 | (2) | 실제 내장 서버를 **랜덤 포트**로 띄웁니다. Step Definition은 `@LocalServerPort`로 포트를 받아 HTTP 요청을 보냅니다. |
 | (3) | `application-test.yml`을 적용합니다. (Docker Compose 자동 실행 끄기 등) |
-| (4) | 컨텍스트가 만들어지기 **전에** Testcontainers DB 접속 정보를 Spring Environment에 주입합니다. |
-| (5) | `static` 블록에서 컨테이너를 한 번만 시작합니다. 모든 Scenario가 같은 DB를 공유합니다. |
+| (4) | 컨텍스트가 만들어지기 **전에** Testcontainers DB 접속 정보를 Spring Environment에 주입합니다. `@DynamicPropertySource`는 JUnit이 아닌 Spring TestContext 기능이라, cucumber-spring 환경에서도 동작합니다. 메서드는 반드시 `static`이어야 합니다. |
+| (5) | `static` 블록에서 컨테이너를 한 번만 시작합니다. 모든 Scenario가 같은 DB를 공유합니다. `@Testcontainers`/`@Container`는 JUnit Jupiter 확장이라 Cucumber 엔진에서는 동작하지 않으므로 직접 시작합니다. |
 
 ### 3.3 `BookStepDefinitions` — Glue 코드
 
